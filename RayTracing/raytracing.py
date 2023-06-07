@@ -75,6 +75,7 @@ def intersect_sphere(O, D, S, R):
 def intersect_triangle(O, D, V0, V1, V2):
     # Return the distance from O to the intersection of the ray (O, D) with the
     # triangle (V0, V1, V2), or +inf if there is no intersection.
+    # Also returns the normal of the triangle.
     # O, V0, V1, V2 are 3D points, D (direction) is a normalized vector.
     E1 = V1 - V0
     E2 = V2 - V0
@@ -93,7 +94,8 @@ def intersect_triangle(O, D, V0, V1, V2):
         return np.inf
     t = np.dot(E2, Q) * inv_det
     if t > 1e-6:
-        return t
+        N = np.cross(E1, E2) / np.linalg.norm(np.cross(E1, E2))
+        return t, N
     return np.inf
 
 def intersect(O, D, obj):
@@ -167,6 +169,11 @@ def add_plane(position, normal):
         color=lambda M: (color_plane0 
             if (int(M[0] * 2) % 2) == (int(M[2] * 2) % 2) else color_plane1),
         diffuse_c=.75, specular_c=.5, reflection=.25)
+
+def add_triangle(V0, V1, V2, color):
+    return dict(type='triangle', v0=np.array(V0),
+                v1=np.array(V1), v2=np.array(V2),
+                color=np.array(color), reflection=.5)
     
 # List of objects.
 color_plane0 = 1. * np.ones(3)
@@ -175,6 +182,7 @@ scene = [add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
          add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5]),
          add_sphere([-2.75, .1, 3.5], .6, [1., .572, .184]),
          add_plane([0., -.5, 0.], [0., 1., 0.]),
+         #add_triangle([-1.5, 0., 0.], [0., 1.5, 0.], [1.5, 0., 0.], [1., 1., 0.])
     ]
 
 # Lights Options with different characteristics and colors
