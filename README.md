@@ -8,3 +8,4 @@
 ### Requisitos: 
 - numpy
 - matplotlib
+- Para ejecutar la parte de OpenGL: g++ -o cube spinningcube_withlight_SKEL.cpp -lglfw -lGLEW -lGL
