@@ -72,11 +72,37 @@ def intersect_sphere(O, D, S, R):
             return t1 if t0 < 0 else t0
     return np.inf
 
+def intersect_triangle(O, D, V0, V1, V2):
+    # Return the distance from O to the intersection of the ray (O, D) with the
+    # triangle (V0, V1, V2), or +inf if there is no intersection.
+    # O, V0, V1, V2 are 3D points, D (direction) is a normalized vector.
+    E1 = V1 - V0
+    E2 = V2 - V0
+    P = np.cross(D, E2)
+    det = np.dot(E1, P)
+    if np.abs(det) < 1e-6:
+        return np.inf
+    inv_det = 1.0 / det
+    T = O - V0
+    u = np.dot(T, P) * inv_det
+    if u < 0 or u > 1:
+        return np.inf
+    Q = np.cross(T, E1)
+    v = np.dot(D, Q) * inv_det
+    if v < 0 or u + v > 1:
+        return np.inf
+    t = np.dot(E2, Q) * inv_det
+    if t > 1e-6:
+        return t
+    return np.inf
+
 def intersect(O, D, obj):
     if obj['type'] == 'plane':
         return intersect_plane(O, D, obj['position'], obj['normal'])
     elif obj['type'] == 'sphere':
         return intersect_sphere(O, D, obj['position'], obj['radius'])
+    elif obj["type"] == "triangle":
+        return intersect_triangle(O, D, obj["v0"], obj["v1"], obj["v2"])
 
 def get_normal(obj, M):
     # Find normal.
@@ -84,6 +110,8 @@ def get_normal(obj, M):
         N = normalize(M - obj['position'])
     elif obj['type'] == 'plane':
         N = obj['normal']
+    elif obj["type"] == "triangle":
+        N = obj["normal"]
     return N
     
 def get_color(obj, M):
@@ -194,7 +222,7 @@ for i, x in enumerate(np.linspace(S[0], S[2], w)):
             Q[:2] = (x, y)
         else: # Top view
             Q[0] = x
-            Q[2] = y 
+            Q[2] = y # In reality 'y' is 'z'
         D = normalize(Q - O)
         depth = 0
         rayO, rayD = O, D
