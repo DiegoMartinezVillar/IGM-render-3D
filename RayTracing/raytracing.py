@@ -20,9 +20,22 @@ SOFTWARE.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 w = 400
 h = 300
+
+if (len(sys.argv) == 1):
+    print("Not indicated view mode as parameter. Options: 0 = normal view / 1 = top view")
+    quit()
+else:
+    try:
+        view_mode = int(sys.argv[1])
+        if view_mode != 0 and view_mode != 1:
+                raise ValueError
+    except ValueError:
+        print("Incorrect view mode value. Options: 0 = normal view / 1 = top view")
+        quit()
 
 def normalize(x):
     x /= np.linalg.norm(x)
@@ -159,8 +172,12 @@ specular_k = 50
 
 depth_max = 5  # Maximum number of light reflections.
 col = np.zeros(3)  # Current color.
-O = np.array([0., 0.35, -1.])  # Camera.
-Q = np.array([0., 0., 0.])  # Camera pointing to.
+if view_mode == 0: # Front View
+    O = np.array([0., 0.35, -1.])  
+    Q = np.array([0., 0., 0.])  
+else: # Top View
+    O = np.array([0.5, 8., -0.7])
+    Q = np.array([0., 5.5, 0.]) 
 img = np.zeros((h, w, 3))
 
 r = float(w) / h
@@ -173,7 +190,11 @@ for i, x in enumerate(np.linspace(S[0], S[2], w)):
         print(i / float(w) * 100, "%")
     for j, y in enumerate(np.linspace(S[1], S[3], h)):
         col[:] = 0
-        Q[:2] = (x, y)
+        if view_mode == 0: # Front view
+            Q[:2] = (x, y)
+        else: # Top view
+            Q[0] = x
+            Q[2] = y 
         D = normalize(Q - O)
         depth = 0
         rayO, rayD = O, D
