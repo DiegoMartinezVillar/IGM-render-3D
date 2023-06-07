@@ -138,16 +138,16 @@ scene = [add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
 
 # Lights Options with different characteristics and colors
 # Light 1
-L_light_1 = np.array([5., 5., -10.])
+L_light_1 = np.array([4., 3., -10.])
 color_light_1 = np.ones(3)
 
 # Light 2
-L_light_2 = np.array([0., 20., -5.])
-color_light_2 = np.array([.3, 1., 1.])
+L_light_2 = np.array([1., 15., -6.])
+color_light_2 = np.array([.5, 2., 2.])
 
 # Light 3
-L_light_3 = np.array([-10., 5., 0.])
-color_light_3 = np.array([1., 0., 1.])
+L_light_3 = np.array([-4., 8., 2.])
+color_light_3 = np.array([1., 0., 0.])
 
 lights = [(L_light_1,color_light_1),(L_light_2,color_light_2),(L_light_3,color_light_3)]
 
