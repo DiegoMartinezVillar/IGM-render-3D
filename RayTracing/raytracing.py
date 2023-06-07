@@ -131,9 +131,20 @@ scene = [add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
          add_plane([0., -.5, 0.], [0., 1., 0.]),
     ]
 
-# Light position and color.
-L = np.array([5., 5., -10.])
-color_light = np.ones(3)
+# Lights Options with different characteristics and colors
+# Light 1
+L_light_1 = np.array([5., 5., -10.])
+color_light_1 = np.ones(3)
+
+# Light 2
+L_light_2 = np.array([0., 20., -5.])
+color_light_2 = np.array([.3, 1., 1.])
+
+# Light 3
+L_light_3 = np.array([-10., 5., 0.])
+color_light_3 = np.array([1., 0., 1.])
+
+lights = [(L_light_1,color_light_1),(L_light_2,color_light_2),(L_light_3,color_light_3)]
 
 # Default light and material parameters.
 ambient = .05
