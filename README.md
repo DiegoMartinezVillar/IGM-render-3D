@@ -5,4 +5,6 @@
 - Lucas José Lara García
 - Julio Fernández Fernández
 
-Necesarios numpy y matplotlib
+### Requisitos: 
+- numpy
+- matplotlib
