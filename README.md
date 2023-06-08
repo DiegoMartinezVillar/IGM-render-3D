@@ -38,5 +38,5 @@ Y ejecutarlo con:
 python raytracing.py COMMAND
 
 Commands:
-  0           (Uses the front view for rendering)
-  1           (Uses the top view for rendering)
+  0           Uses the front view for rendering
+  1           Uses the top view for rendering
