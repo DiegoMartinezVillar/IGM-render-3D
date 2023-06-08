@@ -18,7 +18,7 @@ out vec4 frag_col;
 
 in vec3 frag_3Dpos;
 in vec3 vs_normal;
-in vec2 vs_tex_coord;
+// in vec2 vs_tex_coord;
 
 uniform Material material;
 uniform Light light;
