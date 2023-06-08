@@ -5,10 +5,38 @@
 - Lucas José Lara García - lucas.lara@udc.es
 - Julio Fernández Fernández - julio.ffernandez@udc.es
 
-### Requisitos: 
+### Requisitos Raytracing: 
 - numpy
 - matplotlib
-- Para ejecutar la parte de OpenGL: g++ -o cube spinningcube_withlight_SKEL.cpp -lglfw -lGLEW -lGL
-- Para ejecutar la parte de Ray Tracing:
-  - python3 raytracing.py 0 (Front View)
-  - python3 raytracing.py 1 (Top View)
+
+### Ejecución OpenGL:
+Hay que moverse al directorio OpenGL:
+```bash
+cd OpenGL
+```
+
+Posteriormente, compilar el programa con:
+```bash
+make
+# o alternativamente con
+gcc spinningcube_withlight_SKEL.cpp textfile.c -lGL -lGLEW -lglfw -lm -o spinningcube_withlight
+```
+
+Y ejecutarlo con:
+```bash
+./spinningcube_withlight
+```
+
+### Ejecución Raytracing:
+Hay que moverse al directorio Raytracing:
+```bash
+cd RayTracing
+```
+
+Y ejecutarlo con:
+```bash
+python raytracing.py COMMAND
+
+Commands:
+  - 0           (Uses the front view for rendering)
+  - 1           (Uses the top view for rendering)

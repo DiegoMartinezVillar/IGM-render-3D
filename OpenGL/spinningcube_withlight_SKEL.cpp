@@ -14,6 +14,9 @@
 
 #include "textfile_ALT.h"
 
+
+#define NUM_LIGHTS 2
+
 int gl_width = 640;
 int gl_height = 480;
 
@@ -25,7 +28,7 @@ GLuint shader_program = 0; // shader program to set render pipeline
 GLuint vao = 0; // Vertext Array Object to set input data
 GLint model_location, view_location, proj_location, normal_location, view_pos_location; // Uniforms for transformation matrices
 GLint material_ambient_location, material_diffuse_location, material_specular_location, material_shininess_location; // Uniforms for material data
-GLint light_position_location, light_ambient_location, light_diffuse_location, light_specular_location; // Uniforms for light data
+GLint light_position_location[NUM_LIGHTS], light_ambient_location[NUM_LIGHTS], light_diffuse_location[NUM_LIGHTS], light_specular_location[NUM_LIGHTS]; // Uniforms for light data
 
 // Shader names
 const char *vertexFileName = "spinningcube_withlight_vs_SKEL.glsl";
@@ -35,7 +38,10 @@ const char *fragmentFileName = "spinningcube_withlight_fs_SKEL.glsl";
 glm::vec3 camera_pos(0.0f, 0.0f, 1.0f);
 
 // Lighting
-glm::vec3 light_pos(2.2f, 1.0f, 2.0f);
+glm::vec3 light_positions[] = { // 2 lights with the same ambient, diffuse and specular
+  glm::vec3(0.0f, 2.0f, -3.0f),
+  glm::vec3(3.0f, 0.0f, -3.0f)
+};
 glm::vec3 light_ambient(0.2f, 0.2f, 0.2f);
 glm::vec3 light_diffuse(0.5f, 0.5f, 0.5f);
 glm::vec3 light_specular(1.0f, 1.0f, 1.0f);
@@ -58,7 +64,7 @@ int main() {
   //  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   //  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  GLFWwindow* window = glfwCreateWindow(gl_width, gl_height, "My spinning cube", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(gl_width, gl_height, "My spinning cube and tetrahedron", NULL, NULL);
   if (!window) {
     fprintf(stderr, "ERROR: could not open window with GLFW3\n");
     glfwTerminate();
@@ -153,7 +159,16 @@ int main() {
   // far ---> 1        2
   //       6        5
   //
+  // Tetrahedron to be rendered
+  //
+  //         0 <-- top
+  //
+  //
+  //  1            3 <-- bottom-right
+  //
+  //       2 <-- bottom-center-near
   const GLfloat vertex_positions[] = {
+    // Cube
     -0.25f, -0.25f, -0.25f, // 1
     -0.25f,  0.25f, -0.25f, // 0
      0.25f, -0.25f, -0.25f, // 2
@@ -200,7 +215,24 @@ int main() {
 
     -0.25f,  0.25f, -0.25f, // 0
     -0.25f,  0.25f,  0.25f, // 7
-     0.25f,  0.25f, -0.25f  // 3
+     0.25f,  0.25f, -0.25f, // 3
+
+    // Tetrahedron
+     0.0f,   0.25f,  0.0f,  // 0
+    -0.25f, -0.25f, -0.25f, // 1
+     0.0f,  -0.25f,  0.25f, // 2
+
+     0.0f,   0.25f,  0.0f,  // 0
+     0.0f,  -0.25f,  0.25f, // 2
+     0.25f, -0.25f, -0.25f, // 3
+
+     0.0f,   0.25f,  0.0f,  // 0
+     0.25f, -0.25f, -0.25f, // 3
+    -0.25f, -0.25f, -0.25f, // 1
+
+     0.25f, -0.25f, -0.25f, // 3
+     0.0f,  -0.25f,  0.25f, // 2
+    -0.25f, -0.25f, -0.25f, // 1
   };
 
   // Vertex Buffer Object (for vertex coordinates)
@@ -238,10 +270,21 @@ int main() {
   normal_location = glGetUniformLocation(shader_program, "normal_matrix");
   view_pos_location = glGetUniformLocation(shader_program, "view_pos");
 
-  light_position_location = glGetUniformLocation(shader_program, "light.position");
-  light_ambient_location = glGetUniformLocation(shader_program, "light.ambient");
-  light_diffuse_location = glGetUniformLocation(shader_program, "light.diffuse");
-  light_specular_location = glGetUniformLocation(shader_program, "light.specular");
+  for (int i = 0; i < 2; i++) {
+    char light_position_name[64];
+    char light_ambient_name[64];
+    char light_diffuse_name[64];
+    char light_specular_name[64];
+
+    sprintf(light_position_name, "light[%d].position", i);
+    sprintf(light_ambient_name, "light[%d].ambient", i);
+    sprintf(light_diffuse_name, "light[%d].diffuse", i);
+    sprintf(light_specular_name, "light[%d].specular", i);
+
+    light_position_location[i] = glGetUniformLocation(shader_program, light_position_name);
+    light_ambient_location[i] = glGetUniformLocation(shader_program, light_ambient_name);
+    light_diffuse_location[i] = glGetUniformLocation(shader_program, light_diffuse_name);
+    light_specular_location[i] = glGetUniformLocation(shader_program, light_specular_name);}
 
   material_ambient_location = glGetUniformLocation(shader_program, "material.ambient");
   material_diffuse_location = glGetUniformLocation(shader_program, "material.diffuse");
@@ -278,12 +321,12 @@ void render(double currentTime) {
   glm::mat4 model_matrix, view_matrix, proj_matrix;
   glm::mat3 normal_matrix;
 
-  model_matrix = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, -4.0f));
+  // Cube
+  model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, -3.0f));
   model_matrix = glm::translate(model_matrix,
                              glm::vec3(sinf(2.1f * f) * 0.5f,
                                        cosf(1.7f * f) * 0.5f,
                                        sinf(1.3f * f) * cosf(1.5f * f) * 2.0f));
-
   model_matrix = glm::rotate(model_matrix,
                           glm::radians((float)currentTime * 45.0f),
                           glm::vec3(0.0f, 1.0f, 0.0f));
@@ -291,8 +334,36 @@ void render(double currentTime) {
                           glm::radians((float)currentTime * 81.0f),
                           glm::vec3(1.0f, 0.0f, 0.0f));
 
-  // model_matrix = glm::mat4(1.f);
   glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
+  
+  // Normal matrix: normal vectors to world coordinates
+  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+  glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+
+  // Draw the cube
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+
+  // Tetrahedron
+  model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, -3.0f)); // Reset model_matrix for the tetrahedron
+  model_matrix = glm::translate(model_matrix,
+                             glm::vec3(sinf(2.1f * f) * 0.5f,
+                                       cosf(1.7f * f) * 0.5f,
+                                       sinf(1.3f * f) * cosf(1.5f * f) * 2.0f));
+  model_matrix = glm::rotate(model_matrix,
+                          glm::radians((float)currentTime * 45.0f),
+                          glm::vec3(0.0f, 1.0f, 0.0f));
+  model_matrix = glm::rotate(model_matrix,
+                          glm::radians((float)currentTime * 81.0f),
+                          glm::vec3(1.0f, 0.0f, 0.0f));
+
+  glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
+
+  // Normal matrix: normal vectors to world coordinates
+  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+  glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+
+  // Draw tetrahedron
+  glDrawArrays(GL_TRIANGLES, 36, 12);
 
   proj_matrix = glm::perspective(glm::radians(50.0f),
                                  (float) gl_width / (float) gl_height,
@@ -303,19 +374,17 @@ void render(double currentTime) {
                             glm::vec3(0.0f, 0.0f, 0.0f),  // target
                             glm::vec3(0.0f, 1.0f, 0.0f)); // up
   glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
-
-  // Normal matrix: normal vectors to world coordinates
-  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
-  glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
   
   // Camera position
   glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
 
   // Set light data
-  glUniform3fv(light_position_location, 1, glm::value_ptr(light_pos));
-  glUniform3fv(light_ambient_location, 1, glm::value_ptr(light_ambient));
-  glUniform3fv(light_diffuse_location, 1, glm::value_ptr(light_diffuse));
-  glUniform3fv(light_specular_location, 1, glm::value_ptr(light_specular));
+  for (int i = 0; i < NUM_LIGHTS; i++) {
+    glUniform3fv(light_position_location[i], 1, glm::value_ptr(light_positions[i]));
+    glUniform3fv(light_ambient_location[i], 1, glm::value_ptr(light_ambient));
+    glUniform3fv(light_diffuse_location[i], 1, glm::value_ptr(light_diffuse));
+    glUniform3fv(light_specular_location[i], 1, glm::value_ptr(light_specular));
+  }
 
   // Set material data
   glUniform3fv(material_ambient_location, 1, glm::value_ptr(material_ambient));
@@ -323,7 +392,6 @@ void render(double currentTime) {
   glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
   glUniform1f(material_shininess_location, material_shininess);
 
-  glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 void processInput(GLFWwindow *window) {

@@ -1,7 +1,7 @@
 LDLIBS=-lGL -lGLEW -lglfw -lm
 
 spinningcube_withlight: spinningcube_withlight_SKEL.cpp textfile.c
-	gcc $^ -lGL -lGLEW -lglfw -lm -o $@
+	gcc $^ $(LDLIBS) -o $@
 
 clean:
 	rm -f *.o *~
