@@ -32,7 +32,7 @@ const char *vertexFileName = "spinningcube_withlight_vs_SKEL.glsl";
 const char *fragmentFileName = "spinningcube_withlight_fs_SKEL.glsl";
 
 // Camera
-glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
+glm::vec3 camera_pos(0.0f, 0.0f, 1.0f);
 
 // Lighting
 glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
@@ -215,7 +215,7 @@ int main() {
   glEnableVertexAttribArray(0);
 
   // 1: vertex normals (x, y, z)
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
   glEnableVertexAttribArray(1);
   
   // Unbind vbo (it was conveniently registered by VertexAttribPointer)
@@ -308,6 +308,8 @@ void render(double currentTime) {
   normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
   glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
   
+  // Camera position
+  glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
 
   // Set light data
   glUniform3fv(light_position_location, 1, glm::value_ptr(light_pos));
