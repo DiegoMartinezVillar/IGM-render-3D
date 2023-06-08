@@ -26,7 +26,7 @@ w = 400
 h = 300
 
 if (len(sys.argv) == 1):
-    print("Not indicated view mode as parameter. Options: 0 = normal view / 1 = top view")
+    print("You must indicate a view mode as parameter. Options: 0 = normal view / 1 = top view")
     quit()
 else:
     try:
@@ -34,7 +34,7 @@ else:
         if view_mode != 0 and view_mode != 1:
                 raise ValueError
     except ValueError:
-        print("Incorrect view mode value. Options: 0 = normal view / 1 = top view")
+        print("Incorrect view mode value, insert another one. Options: 0 = normal view / 1 = top view")
         quit()
 
 def normalize(x):
