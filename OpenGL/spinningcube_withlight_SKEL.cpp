@@ -33,6 +33,8 @@ const char *fragmentFileName = "spinningcube_withlight_fs_SKEL.glsl";
 
 // Camera
 glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
+bool basic_camera_position = true;
+bool key_c_pressed = false;
 
 // Lighting
 glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
@@ -291,7 +293,7 @@ void render(double currentTime) {
                           glm::radians((float)currentTime * 81.0f),
                           glm::vec3(1.0f, 0.0f, 0.0f));
 
-  // model_matrix = glm::mat4(1.f);
+  //model_matrix = glm::mat4(1.f);
   glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
 
   proj_matrix = glm::perspective(glm::radians(50.0f),
@@ -327,6 +329,20 @@ void render(double currentTime) {
 void processInput(GLFWwindow *window) {
   if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, 1);
+  else if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+  {
+    if (!key_c_pressed)
+    {
+      key_c_pressed = true;
+      camera_pos = basic_camera_position ? glm::vec3(0.0f, 0.0f, 6.0f) : glm::vec3(0.0f, 0.0f, 3.0f);
+      basic_camera_position = !basic_camera_position;
+    }
+  }
+  else if (glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE)
+  {
+    key_c_pressed = false;
+  }
+  
 }
 
 // Callback function to track window size and update viewport
