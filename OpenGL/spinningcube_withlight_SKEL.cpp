@@ -39,8 +39,8 @@ glm::vec3 camera_pos(0.0f, 0.0f, 1.0f);
 
 // Lighting
 glm::vec3 light_positions[] = { // 2 lights with the same ambient, diffuse and specular
-  glm::vec3(3.0f, 1.0f, -3.0f),
-  glm::vec3(-3.0f, -1.0f, -3.0f)
+  glm::vec3(0.0f, 2.0f, -3.0f),
+  glm::vec3(3.0f, 0.0f, -3.0f)
 };
 glm::vec3 light_ambient(0.2f, 0.2f, 0.2f);
 glm::vec3 light_diffuse(0.5f, 0.5f, 0.5f);
@@ -64,7 +64,7 @@ int main() {
   //  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   //  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  GLFWwindow* window = glfwCreateWindow(gl_width, gl_height, "My spinning cube", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(gl_width, gl_height, "My spinning cube and tetrahedron", NULL, NULL);
   if (!window) {
     fprintf(stderr, "ERROR: could not open window with GLFW3\n");
     glfwTerminate();
@@ -159,7 +159,16 @@ int main() {
   // far ---> 1        2
   //       6        5
   //
+  // Tetrahedron to be rendered
+  //
+  //         0 <-- top
+  //
+  //
+  //  1            3 <-- bottom-right
+  //
+  //       2 <-- bottom-center-near
   const GLfloat vertex_positions[] = {
+    // Cube
     -0.25f, -0.25f, -0.25f, // 1
     -0.25f,  0.25f, -0.25f, // 0
      0.25f, -0.25f, -0.25f, // 2
@@ -206,7 +215,24 @@ int main() {
 
     -0.25f,  0.25f, -0.25f, // 0
     -0.25f,  0.25f,  0.25f, // 7
-     0.25f,  0.25f, -0.25f  // 3
+     0.25f,  0.25f, -0.25f, // 3
+
+    // Tetrahedron
+     0.0f,   0.25f,  0.0f,  // 0
+    -0.25f, -0.25f, -0.25f, // 1
+     0.0f,  -0.25f,  0.25f, // 2
+
+     0.0f,   0.25f,  0.0f,  // 0
+     0.0f,  -0.25f,  0.25f, // 2
+     0.25f, -0.25f, -0.25f, // 3
+
+     0.0f,   0.25f,  0.0f,  // 0
+     0.25f, -0.25f, -0.25f, // 3
+    -0.25f, -0.25f, -0.25f, // 1
+
+     0.25f, -0.25f, -0.25f, // 3
+     0.0f,  -0.25f,  0.25f, // 2
+    -0.25f, -0.25f, -0.25f, // 1
   };
 
   // Vertex Buffer Object (for vertex coordinates)
@@ -295,7 +321,7 @@ void render(double currentTime) {
   glm::mat4 model_matrix, view_matrix, proj_matrix;
   glm::mat3 normal_matrix;
 
-  // First cube
+  // Cube
   model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, -3.0f));
   model_matrix = glm::translate(model_matrix,
                              glm::vec3(sinf(2.1f * f) * 0.5f,
@@ -314,11 +340,11 @@ void render(double currentTime) {
   normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
   glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
-  // Draw the first cube
+  // Draw the cube
   glDrawArrays(GL_TRIANGLES, 0, 36);
 
-  // Second cube
-  model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, -3.0f)); // Reset model_matrix for the second cube
+  // Tetrahedron
+  model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, -3.0f)); // Reset model_matrix for the tetrahedron
   model_matrix = glm::translate(model_matrix,
                              glm::vec3(sinf(2.1f * f) * 0.5f,
                                        cosf(1.7f * f) * 0.5f,
@@ -336,8 +362,8 @@ void render(double currentTime) {
   normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
   glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
-  // Draw second cube
-  glDrawArrays(GL_TRIANGLES, 0, 36);
+  // Draw tetrahedron
+  glDrawArrays(GL_TRIANGLES, 36, 12);
 
   proj_matrix = glm::perspective(glm::radians(50.0f),
                                  (float) gl_width / (float) gl_height,
