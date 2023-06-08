@@ -39,8 +39,8 @@ glm::vec3 camera_pos(0.0f, 0.0f, 1.0f);
 
 // Lighting
 glm::vec3 light_positions[] = { // 2 lights with the same ambient, diffuse and specular
-  glm::vec3(2.2f, 1.0f, 2.0f),
-  glm::vec3(-2.2f, -1.0f, 2.0f)
+  glm::vec3(3.0f, 1.0f, -3.0f),
+  glm::vec3(-3.0f, -1.0f, -3.0f)
 };
 glm::vec3 light_ambient(0.2f, 0.2f, 0.2f);
 glm::vec3 light_diffuse(0.5f, 0.5f, 0.5f);
@@ -295,12 +295,12 @@ void render(double currentTime) {
   glm::mat4 model_matrix, view_matrix, proj_matrix;
   glm::mat3 normal_matrix;
 
-  model_matrix = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, -4.0f));
+  // First cube
+  model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, -3.0f));
   model_matrix = glm::translate(model_matrix,
                              glm::vec3(sinf(2.1f * f) * 0.5f,
                                        cosf(1.7f * f) * 0.5f,
                                        sinf(1.3f * f) * cosf(1.5f * f) * 2.0f));
-
   model_matrix = glm::rotate(model_matrix,
                           glm::radians((float)currentTime * 45.0f),
                           glm::vec3(0.0f, 1.0f, 0.0f));
@@ -308,8 +308,36 @@ void render(double currentTime) {
                           glm::radians((float)currentTime * 81.0f),
                           glm::vec3(1.0f, 0.0f, 0.0f));
 
-  // model_matrix = glm::mat4(1.f);
   glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
+  
+  // Normal matrix: normal vectors to world coordinates
+  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+  glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+
+  // Draw the first cube
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+
+  // Second cube
+  model_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, -3.0f)); // Reset model_matrix for the second cube
+  model_matrix = glm::translate(model_matrix,
+                             glm::vec3(sinf(2.1f * f) * 0.5f,
+                                       cosf(1.7f * f) * 0.5f,
+                                       sinf(1.3f * f) * cosf(1.5f * f) * 2.0f));
+  model_matrix = glm::rotate(model_matrix,
+                          glm::radians((float)currentTime * 45.0f),
+                          glm::vec3(0.0f, 1.0f, 0.0f));
+  model_matrix = glm::rotate(model_matrix,
+                          glm::radians((float)currentTime * 81.0f),
+                          glm::vec3(1.0f, 0.0f, 0.0f));
+
+  glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
+
+  // Normal matrix: normal vectors to world coordinates
+  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+  glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+
+  // Draw second cube
+  glDrawArrays(GL_TRIANGLES, 0, 36);
 
   proj_matrix = glm::perspective(glm::radians(50.0f),
                                  (float) gl_width / (float) gl_height,
@@ -320,10 +348,6 @@ void render(double currentTime) {
                             glm::vec3(0.0f, 0.0f, 0.0f),  // target
                             glm::vec3(0.0f, 1.0f, 0.0f)); // up
   glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
-
-  // Normal matrix: normal vectors to world coordinates
-  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
-  glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
   
   // Camera position
   glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
@@ -342,7 +366,6 @@ void render(double currentTime) {
   glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
   glUniform1f(material_shininess_location, material_shininess);
 
-  glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 void processInput(GLFWwindow *window) {
