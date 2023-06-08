@@ -404,7 +404,7 @@ void processInput(GLFWwindow *window) {
     if (!key_c_pressed)
     {
       key_c_pressed = true;
-      camera_pos = basic_camera_position ? glm::vec3(0.0f, 0.0f, 6.0f) : glm::vec3(0.0f, 0.0f, 3.0f);
+      camera_pos = basic_camera_position ? glm::vec3(0.0f, 0.0f, -9.0f) : glm::vec3(0.0f, 0.0f, 3.0f);
       basic_camera_position = !basic_camera_position;
     }
   }
