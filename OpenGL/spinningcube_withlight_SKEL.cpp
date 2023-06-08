@@ -23,17 +23,19 @@ void render(double);
 
 GLuint shader_program = 0; // shader program to set render pipeline
 GLuint vao = 0; // Vertext Array Object to set input data
-GLint model_location, view_location, proj_location; // Uniforms for transformation matrices
+GLint model_location, view_location, proj_location, normal_location, view_pos_location; // Uniforms for transformation matrices
+GLint material_ambient_location, material_diffuse_location, material_specular_location, material_shininess_location; // Uniforms for material data
+GLint light_position_location, light_ambient_location, light_diffuse_location, light_specular_location; // Uniforms for light data
 
 // Shader names
 const char *vertexFileName = "spinningcube_withlight_vs_SKEL.glsl";
 const char *fragmentFileName = "spinningcube_withlight_fs_SKEL.glsl";
 
 // Camera
-glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
+glm::vec3 camera_pos(0.0f, 0.0f, 1.0f);
 
 // Lighting
-glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
+glm::vec3 light_pos(2.2f, 1.0f, 2.0f);
 glm::vec3 light_ambient(0.2f, 0.2f, 0.2f);
 glm::vec3 light_diffuse(0.5f, 0.5f, 0.5f);
 glm::vec3 light_specular(1.0f, 1.0f, 1.0f);
@@ -201,7 +203,7 @@ int main() {
      0.25f,  0.25f, -0.25f  // 3
   };
 
-// Vertex Buffer Object (for vertex coordinates)
+  // Vertex Buffer Object (for vertex coordinates)
   GLuint vbo = 0;
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -213,7 +215,9 @@ int main() {
   glEnableVertexAttribArray(0);
 
   // 1: vertex normals (x, y, z)
-
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+  glEnableVertexAttribArray(1);
+  
   // Unbind vbo (it was conveniently registered by VertexAttribPointer)
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -231,7 +235,18 @@ int main() {
   model_location = glGetUniformLocation(shader_program, "model");
   view_location = glGetUniformLocation(shader_program, "view");
   proj_location = glGetUniformLocation(shader_program, "projection");
-  // [...]
+  normal_location = glGetUniformLocation(shader_program, "normal_matrix");
+  view_pos_location = glGetUniformLocation(shader_program, "view_pos");
+
+  light_position_location = glGetUniformLocation(shader_program, "light.position");
+  light_ambient_location = glGetUniformLocation(shader_program, "light.ambient");
+  light_diffuse_location = glGetUniformLocation(shader_program, "light.diffuse");
+  light_specular_location = glGetUniformLocation(shader_program, "light.specular");
+
+  material_ambient_location = glGetUniformLocation(shader_program, "material.ambient");
+  material_diffuse_location = glGetUniformLocation(shader_program, "material.diffuse");
+  material_specular_location = glGetUniformLocation(shader_program, "material.specular");
+  material_shininess_location = glGetUniformLocation(shader_program, "material.shininess");
 
 // Render loop
   while(!glfwWindowShouldClose(window)) {
@@ -261,21 +276,52 @@ void render(double currentTime) {
   glBindVertexArray(vao);
 
   glm::mat4 model_matrix, view_matrix, proj_matrix;
+  glm::mat3 normal_matrix;
 
-  model_matrix = glm::mat4(1.f);
+  model_matrix = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, -4.0f));
+  model_matrix = glm::translate(model_matrix,
+                             glm::vec3(sinf(2.1f * f) * 0.5f,
+                                       cosf(1.7f * f) * 0.5f,
+                                       sinf(1.3f * f) * cosf(1.5f * f) * 2.0f));
+
+  model_matrix = glm::rotate(model_matrix,
+                          glm::radians((float)currentTime * 45.0f),
+                          glm::vec3(0.0f, 1.0f, 0.0f));
+  model_matrix = glm::rotate(model_matrix,
+                          glm::radians((float)currentTime * 81.0f),
+                          glm::vec3(1.0f, 0.0f, 0.0f));
+
+  // model_matrix = glm::mat4(1.f);
+  glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
+
+  proj_matrix = glm::perspective(glm::radians(50.0f),
+                                 (float) gl_width / (float) gl_height,
+                                 0.1f, 1000.0f);
+  glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(proj_matrix));
+  
   view_matrix = glm::lookAt(                 camera_pos,  // pos
                             glm::vec3(0.0f, 0.0f, 0.0f),  // target
                             glm::vec3(0.0f, 1.0f, 0.0f)); // up
+  glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
 
-  // Moving cube
-  // model_matrix = glm::rotate(model_matrix,
-  //   [...]
-  //
-  // Projection
-  // proj_matrix = glm::perspective(glm::radians(50.0f),
-  //   [...]
-  //
   // Normal matrix: normal vectors to world coordinates
+  normal_matrix = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+  glUniformMatrix3fv(normal_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+  
+  // Camera position
+  glUniform3fv(view_pos_location, 1, glm::value_ptr(camera_pos));
+
+  // Set light data
+  glUniform3fv(light_position_location, 1, glm::value_ptr(light_pos));
+  glUniform3fv(light_ambient_location, 1, glm::value_ptr(light_ambient));
+  glUniform3fv(light_diffuse_location, 1, glm::value_ptr(light_diffuse));
+  glUniform3fv(light_specular_location, 1, glm::value_ptr(light_specular));
+
+  // Set material data
+  glUniform3fv(material_ambient_location, 1, glm::value_ptr(material_ambient));
+  glUniform3fv(material_diffuse_location, 1, glm::value_ptr(material_diffuse));
+  glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
+  glUniform1f(material_shininess_location, material_shininess);
 
   glDrawArrays(GL_TRIANGLES, 0, 36);
 }
