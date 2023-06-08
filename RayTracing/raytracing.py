@@ -79,23 +79,21 @@ def intersect_triangle(O, D, V0, V1, V2):
     # O, V0, V1, V2 are 3D points, D (direction) is a normalized vector.
     E1 = V1 - V0
     E2 = V2 - V0
-    P = np.cross(D, E2)
-    det = np.dot(E1, P)
-    if np.abs(det) < 1e-6:
-        return np.inf
-    inv_det = 1.0 / det
     T = O - V0
-    u = np.dot(T, P) * inv_det
-    if u < 0 or u > 1:
-        return np.inf
+    P = np.cross(D, E2)
     Q = np.cross(T, E1)
-    v = np.dot(D, Q) * inv_det
-    if v < 0 or u + v > 1:
+    denom = np.dot(P, E1)
+    
+    if np.abs(denom) < 1e-6:
         return np.inf
-    t = np.dot(E2, Q) * inv_det
-    if t > 1e-6:
-        N = np.cross(E1, E2) / np.linalg.norm(np.cross(E1, E2))
-        return t, N
+    
+    u = np.dot(P, T) / denom
+    v = np.dot(Q, D) / denom
+    t = np.dot(Q, E2) / denom
+    
+    if u >= 0 and v >= 0 and u + v <= 1 and t >= 0:
+        return t
+    
     return np.inf
 
 def intersect(O, D, obj):
@@ -113,7 +111,7 @@ def get_normal(obj, M):
     elif obj['type'] == 'plane':
         N = obj['normal']
     elif obj["type"] == "triangle":
-        N = obj["normal"]
+        N = normalize(np.cross(obj['v1'] - obj['v0'], obj['v2'] - obj['v0']))
     return N
     
 def get_color(obj, M):
@@ -182,7 +180,7 @@ scene = [add_sphere([.75, .1, 1.], .6, [0., 0., 1.]),
          add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5]),
          add_sphere([-2.75, .1, 3.5], .6, [1., .572, .184]),
          add_plane([0., -.5, 0.], [0., 1., 0.]),
-         #add_triangle([-1.5, 0., 0.], [0., 1.5, 0.], [1.5, 0., 0.], [1., 1., 0.])
+         add_triangle([-.5, 0.9, 1.0], [.0, -.5, 1.0], [-1.0, -.5, 1.0], [1., 1., 0.])
     ]
 
 # Lights Options with different characteristics and colors
