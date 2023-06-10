@@ -40,7 +40,9 @@ const char *vertexFileName = "spinningcube_withlight_vs_SKEL.glsl";
 const char *fragmentFileName = "spinningcube_withlight_fs_SKEL.glsl";
 
 // Camera
-glm::vec3 camera_pos(0.0f, 0.0f, 1.0f);
+glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
+bool basic_camera_position = true;
+bool key_c_pressed = false;
 
 // Lighting
 glm::vec3 light_positions[] = { // 2 lights with the same ambient, diffuse and specular
@@ -488,6 +490,20 @@ void render(double currentTime) {
 void processInput(GLFWwindow *window) {
   if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, 1);
+  else if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+  {
+    if (!key_c_pressed)
+    {
+      key_c_pressed = true;
+      camera_pos = basic_camera_position ? glm::vec3(0.0f, 0.0f, -9.0f) : glm::vec3(0.0f, 0.0f, 3.0f);
+      basic_camera_position = !basic_camera_position;
+    }
+  }
+  else if (glfwGetKey(window, GLFW_KEY_C) == GLFW_RELEASE)
+  {
+    key_c_pressed = false;
+  }
+  
 }
 
 // Callback function to track window size and update viewport
