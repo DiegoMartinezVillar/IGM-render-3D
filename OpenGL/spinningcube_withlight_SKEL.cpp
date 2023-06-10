@@ -30,7 +30,7 @@ GLuint shader_program = 0; // shader program to set render pipeline
 GLuint vao = 0; // Vertext Array Object to set input data
 GLuint texture = 0; // Texture to paste on polygon
 GLint model_location, view_location, proj_location, normal_location, view_pos_location; // Uniforms for transformation matrices
-GLint material_diffuse_location, material_specular_location, material_shininess_location; // Uniforms for material data
+GLint material_specular_location, material_shininess_location; // Uniforms for material data
 GLint light_position_location[NUM_LIGHTS], light_ambient_location[NUM_LIGHTS], light_diffuse_location[NUM_LIGHTS], light_specular_location[NUM_LIGHTS]; // Uniforms for light data
 GLint texture_location; // Uniform for texture data
 
@@ -51,7 +51,6 @@ glm::vec3 light_diffuse(0.5f, 0.5f, 0.5f);
 glm::vec3 light_specular(1.0f, 1.0f, 1.0f);
 
 // Material
-glm::vec3 material_diffuse(1.0f, 0.5f, 0.31f);
 glm::vec3 material_specular(0.5f, 0.5f, 0.5f);
 const GLfloat material_shininess = 32.0f;
 
@@ -402,7 +401,6 @@ int main() {
     light_diffuse_location[i] = glGetUniformLocation(shader_program, light_diffuse_name);
     light_specular_location[i] = glGetUniformLocation(shader_program, light_specular_name);}
 
-  material_diffuse_location = glGetUniformLocation(shader_program, "material.diffuse");
   material_specular_location = glGetUniformLocation(shader_program, "material.specular");
   material_shininess_location = glGetUniformLocation(shader_program, "material.shininess");
 
@@ -506,7 +504,6 @@ void render(double currentTime) {
   }
 
   // Set material data
-  glUniform3fv(material_diffuse_location, 1, glm::value_ptr(material_diffuse));
   glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
   glUniform1f(material_shininess_location, material_shininess);
 
