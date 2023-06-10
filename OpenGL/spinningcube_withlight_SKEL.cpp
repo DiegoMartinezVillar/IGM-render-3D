@@ -25,14 +25,15 @@ int gl_height = 480;
 void glfw_window_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 void render(double);
+unsigned int load_texture(const char* filename);
 
 GLuint shader_program = 0; // shader program to set render pipeline
 GLuint vao = 0; // Vertext Array Object to set input data
-GLuint texture = 0; // Texture to paste on polygon
 GLint model_location, view_location, proj_location, normal_location, view_pos_location; // Uniforms for transformation matrices
-GLint material_specular_location, material_shininess_location; // Uniforms for material data
+GLint material_shininess_location; // Uniforms for material data
 GLint light_position_location[NUM_LIGHTS], light_ambient_location[NUM_LIGHTS], light_diffuse_location[NUM_LIGHTS], light_specular_location[NUM_LIGHTS]; // Uniforms for light data
-GLint texture_location; // Uniform for texture data
+GLint texture_diffuse_location, texture_specular_location; // Uniform for texture data
+GLint texture_diffuse_map, texture_specular_map; // Texture maps
 
 // Shader names
 const char *vertexFileName = "spinningcube_withlight_vs_SKEL.glsl";
@@ -51,7 +52,6 @@ glm::vec3 light_diffuse(0.5f, 0.5f, 0.5f);
 glm::vec3 light_specular(1.0f, 1.0f, 1.0f);
 
 // Material
-glm::vec3 material_specular(0.5f, 0.5f, 0.5f);
 const GLfloat material_shininess = 32.0f;
 
 int main() {
@@ -337,38 +337,8 @@ int main() {
   // Unbind vao
   glBindVertexArray(0);
 
-  // Texture
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-
-  // Set texture wrapping and filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,  GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,  GL_LINEAR);
-
-  // Load image, create texture and generate mipmaps
-  int width, height, nrChannels;
-  unsigned char *data = stbi_load("texture.png", &width, &height, &nrChannels, 0);
-
-  if (data) {
-    GLenum format;
-    if (nrChannels == 1)
-      format = GL_RED;
-    else if (nrChannels == 3)
-      format = GL_RGB;
-    else if (nrChannels == 4)
-      format = GL_RGBA;
-    
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
-                 format, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-  } else {
-    printf("ERROR: Failed to load texture\n");
-  }
-
-  // Free image after texture generation
-  stbi_image_free(data);
+  texture_diffuse_map = load_texture("texture.png");
+  texture_specular_map = load_texture("texture_specular.png");
 
   // Uniforms
   // - Model matrix
@@ -401,12 +371,13 @@ int main() {
     light_diffuse_location[i] = glGetUniformLocation(shader_program, light_diffuse_name);
     light_specular_location[i] = glGetUniformLocation(shader_program, light_specular_name);}
 
-  material_specular_location = glGetUniformLocation(shader_program, "material.specular");
   material_shininess_location = glGetUniformLocation(shader_program, "material.shininess");
+  
+  texture_diffuse_location = glGetUniformLocation(shader_program, "material.diffuse");
+  texture_specular_location = glGetUniformLocation(shader_program, "material.specular");
 
-  texture_location = glGetUniformLocation(shader_program, "material.diffuse");
-
-  glUniform1i(texture_location, 0);
+  glUniform1i(texture_diffuse_location, 0);
+  glUniform1i(texture_specular_location, 1);
 
 // Render loop
   while(!glfwWindowShouldClose(window)) {
@@ -504,9 +475,14 @@ void render(double currentTime) {
   }
 
   // Set material data
-  glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
   glUniform1f(material_shininess_location, material_shininess);
 
+  // Bind textures
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture_diffuse_map);
+  
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, texture_specular_map);
 }
 
 void processInput(GLFWwindow *window) {
@@ -519,4 +495,39 @@ void glfw_window_size_callback(GLFWwindow* window, int width, int height) {
   gl_width = width;
   gl_height = height;
   printf("New viewport: (width: %d, height: %d)\n", width, height);
+}
+
+unsigned int load_texture(const char* filename) {
+  unsigned int texture;
+  glGenTextures(1, &texture);
+
+  // Load image, create texture and generate mipmaps
+  int width, height, nrChannels;
+  unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
+  if (data) {
+    GLenum format;
+    if (nrChannels == 1)
+      format = GL_RED;
+    else if (nrChannels == 3)
+      format = GL_RGB;
+    else if (nrChannels == 4)
+      format = GL_RGBA;
+    
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // Set texture wrapping and filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,  GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,  GL_LINEAR);
+  } else {
+    printf("ERROR: Failed to load texture\n");
+  }
+
+  // Free image after texture generation
+  stbi_image_free(data);
+  return texture;
 }
