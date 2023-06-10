@@ -5,6 +5,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 // GLM library to deal with matrix operations
 #include <glm/glm.hpp>
@@ -26,9 +28,11 @@ void render(double);
 
 GLuint shader_program = 0; // shader program to set render pipeline
 GLuint vao = 0; // Vertext Array Object to set input data
+GLuint texture = 0; // Texture to paste on polygon
 GLint model_location, view_location, proj_location, normal_location, view_pos_location; // Uniforms for transformation matrices
-GLint material_ambient_location, material_diffuse_location, material_specular_location, material_shininess_location; // Uniforms for material data
+GLint material_diffuse_location, material_specular_location, material_shininess_location; // Uniforms for material data
 GLint light_position_location[NUM_LIGHTS], light_ambient_location[NUM_LIGHTS], light_diffuse_location[NUM_LIGHTS], light_specular_location[NUM_LIGHTS]; // Uniforms for light data
+GLint texture_location; // Uniform for texture data
 
 // Shader names
 const char *vertexFileName = "spinningcube_withlight_vs_SKEL.glsl";
@@ -47,7 +51,6 @@ glm::vec3 light_diffuse(0.5f, 0.5f, 0.5f);
 glm::vec3 light_specular(1.0f, 1.0f, 1.0f);
 
 // Material
-glm::vec3 material_ambient(1.0f, 0.5f, 0.31f);
 glm::vec3 material_diffuse(1.0f, 0.5f, 0.31f);
 glm::vec3 material_specular(0.5f, 0.5f, 0.5f);
 const GLfloat material_shininess = 32.0f;
@@ -235,6 +238,75 @@ int main() {
     -0.25f, -0.25f, -0.25f, // 1
   };
 
+  const GLfloat texture_positions[] {
+    // Cube
+    1.0f, 0.0f, // 1
+    1.0f, 1.0f, // 0
+    0.0f, 0.0f, // 2
+
+    0.0f, 1.0f, // 3
+    0.0f, 0.0f, // 2
+    1.0f, 1.0f, // 0
+
+    1.0f, 0.0f, // 2
+    1.0f, 1.0f, // 3
+    0.0f, 0.0f, // 5
+
+    0.0f, 1.0f, // 4
+    0.0f, 0.0f, // 5
+    1.0f, 1.0f, // 3
+
+    1.0f, 0.0f, // 5
+    1.0f, 1.0f, // 4
+    0.0f, 0.0f, // 6
+
+    0.0f, 1.0f, // 7
+    0.0f, 0.0f, // 6
+    1.0f, 1.0f, // 4
+
+    1.0f, 0.0f, // 6
+    1.0f, 1.0f, // 7
+    0.0f, 0.0f, // 1
+
+    0.0f, 1.0f, // 0
+    0.0f, 0.0f, // 1
+    1.0f, 1.0f, // 7
+
+    1.0f, 0.0f, // 2
+    1.0f, 1.0f, // 5
+    0.0f, 0.0f, // 1
+
+    0.0f, 1.0f, // 6
+    0.0f, 0.0f, // 1
+    1.0f, 1.0f, // 5
+
+    1.0f, 0.0f, // 4
+    1.0f, 1.0f, // 3
+    0.0f, 0.0f, // 7
+
+    0.0f, 1.0f, // 0
+    0.0f, 0.0f, // 7
+    1.0f, 1.0f, // 3
+
+    // Tetrahedron
+    0.5f, 1.0f, // 0
+    0.0f, 0.0f, // 1
+    1.0f, 0.0f, // 2
+
+    0.5f, 1.0f, // 0
+    0.0f, 0.0f, // 2
+    1.0f, 0.0f, // 3
+
+    0.5f, 1.0f, // 0
+    0.0f, 0.0f, // 3
+    1.0f, 0.0f, // 1
+
+    1.0f, 0.0f, // 3
+    0.5f, 1.0f, // 2
+    0.0f, 0.0f, // 1
+
+  };
+
   // Vertex Buffer Object (for vertex coordinates)
   GLuint vbo = 0;
   glGenBuffers(1, &vbo);
@@ -249,12 +321,55 @@ int main() {
   // 1: vertex normals (x, y, z)
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
   glEnableVertexAttribArray(1);
+
+  // Vertex Buffer Object (for texture coordinates)
+  GLuint tvbo = 0;
+  glGenBuffers(1, &tvbo);
+  glBindBuffer(GL_ARRAY_BUFFER, tvbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(texture_positions), texture_positions, GL_STATIC_DRAW);
+
+  // 2: texture coordinates (u, v)
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+  glEnableVertexAttribArray(2);
   
   // Unbind vbo (it was conveniently registered by VertexAttribPointer)
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // Unbind vao
   glBindVertexArray(0);
+
+  // Texture
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+
+  // Set texture wrapping and filtering parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,  GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,  GL_LINEAR);
+
+  // Load image, create texture and generate mipmaps
+  int width, height, nrChannels;
+  unsigned char *data = stbi_load("texture.png", &width, &height, &nrChannels, 0);
+
+  if (data) {
+    GLenum format;
+    if (nrChannels == 1)
+      format = GL_RED;
+    else if (nrChannels == 3)
+      format = GL_RGB;
+    else if (nrChannels == 4)
+      format = GL_RGBA;
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
+                 format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  } else {
+    printf("ERROR: Failed to load texture\n");
+  }
+
+  // Free image after texture generation
+  stbi_image_free(data);
 
   // Uniforms
   // - Model matrix
@@ -264,6 +379,7 @@ int main() {
   // - Camera position
   // - Light data
   // - Material data
+  // - Texture data
   model_location = glGetUniformLocation(shader_program, "model");
   view_location = glGetUniformLocation(shader_program, "view");
   proj_location = glGetUniformLocation(shader_program, "projection");
@@ -286,10 +402,13 @@ int main() {
     light_diffuse_location[i] = glGetUniformLocation(shader_program, light_diffuse_name);
     light_specular_location[i] = glGetUniformLocation(shader_program, light_specular_name);}
 
-  material_ambient_location = glGetUniformLocation(shader_program, "material.ambient");
   material_diffuse_location = glGetUniformLocation(shader_program, "material.diffuse");
   material_specular_location = glGetUniformLocation(shader_program, "material.specular");
   material_shininess_location = glGetUniformLocation(shader_program, "material.shininess");
+
+  texture_location = glGetUniformLocation(shader_program, "material.diffuse");
+
+  glUniform1i(texture_location, 0);
 
 // Render loop
   while(!glfwWindowShouldClose(window)) {
@@ -387,7 +506,6 @@ void render(double currentTime) {
   }
 
   // Set material data
-  glUniform3fv(material_ambient_location, 1, glm::value_ptr(material_ambient));
   glUniform3fv(material_diffuse_location, 1, glm::value_ptr(material_diffuse));
   glUniform3fv(material_specular_location, 1, glm::value_ptr(material_specular));
   glUniform1f(material_shininess_location, material_shininess);

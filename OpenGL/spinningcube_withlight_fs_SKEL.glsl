@@ -1,8 +1,7 @@
 #version 130
 
 struct Material {
-  vec3 ambient;
-  vec3 diffuse;
+  sampler2D diffuse;
   vec3 specular;
   float shininess;
 };
@@ -18,7 +17,7 @@ out vec4 frag_col;
 
 in vec3 frag_3Dpos;
 in vec3 vs_normal;
-// in vec2 vs_tex_coord;
+in vec2 vs_tex_coord;
 
 #define NUM_LIGHTS 2
 
@@ -30,13 +29,13 @@ void main() {
   vec3 result = vec3(0.0);
   for (int i = 0; i < NUM_LIGHTS; i++) {
     // Ambient
-    vec3 ambient = light[i].ambient * material.ambient;
+    vec3 ambient = light[i].ambient * vec3(texture(material.diffuse, vs_tex_coord));
 
     vec3 light_dir = normalize(light[i].position - frag_3Dpos);
 
     // Diffuse
     float diff = max(dot(vs_normal, light_dir), 0.0);
-    vec3 diffuse = light[i].diffuse * diff * material.diffuse;
+    vec3 diffuse = light[i].diffuse * diff * vec3(texture(material.diffuse, vs_tex_coord));
 
     // Specular
     vec3 view_dir = normalize(view_pos - frag_3Dpos);
