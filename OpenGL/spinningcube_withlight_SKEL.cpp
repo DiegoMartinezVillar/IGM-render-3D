@@ -41,8 +41,8 @@ const char *fragmentFileName = "spinningcube_withlight_fs_SKEL.glsl";
 
 // Camera
 glm::vec3 camera_pos(0.0f, 0.0f, 3.0f);
-bool basic_camera_position = true;
-bool key_c_pressed = false;
+bool basic_camera_position = true; // keep track of camera position
+bool key_c_pressed = false; // keep track of C key pressing state
 
 // Lighting
 glm::vec3 light_positions[] = { // 2 lights with the same ambient, diffuse and specular
@@ -490,11 +490,11 @@ void render(double currentTime) {
 void processInput(GLFWwindow *window) {
   if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, 1);
-  else if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+  else if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) // Change camera position when C is pressed
   {
     if (!key_c_pressed)
     {
-      key_c_pressed = true;
+      key_c_pressed = true; // Avoid multiple key presses
       camera_pos = basic_camera_position ? glm::vec3(0.0f, 0.0f, -9.0f) : glm::vec3(0.0f, 0.0f, 3.0f);
       basic_camera_position = !basic_camera_position;
     }
